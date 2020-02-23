@@ -5,6 +5,11 @@ import tensorflow as tf
 from tensorflow.python.framework import tensor_shape
 
 class ConcatenateWithCropping2D(tf.keras.layers.Layer):
+  '''
+  Concatenate a list of feature maps with different shape.
+  Output shape is the mininum shape among the list, features map are cropped 
+  to this miminum shape before being concatenated
+  '''
   def __init__(self, data_format='channels_last', **kwargs):
     super(ConcatenateWithCropping2D, self).__init__(**kwargs)
     self.data_format = data_format
