@@ -20,32 +20,26 @@ class ConcatenateWithCropping2D(tf.keras.layers.Layer):
             'data_format': self.data_format
         })
     return config
+  
   def call(self, inputs):
     assert isinstance(inputs, list)
+    min_shape = tf.reduce_min([tf.shape(i) for i in inputs], axis=0)
     if self.data_format == 'channels_first':
-      try:
-        rows = min([x.shape[2] for x in inputs])
-      except:
-        rows = None
-      try:
-        cols = min([x.shape[3] for x in inputs])   
-      except:
-        cols = None   
-      return tf.keras.backend.concatenate([
-        x[:, :, 0:rows, 0:cols] for x in inputs                                  
-      ], axis=1)
+      min_shape = tf.concat([tf.constant([-1]), tf.constant([-1]), min_shape[2:4]], axis=0)
+      return tf.ensure_shape(
+          tf.keras.backend.concatenate([
+            tf.slice(x, (0,0,0,0), min_shape) for x in inputs                                  
+          ], axis=3),
+          shape=(None, None, sum([x.shape[1] for x in inputs]), None)
+      )  
     else:
-      try:
-        rows = min([x.shape[1] for x in inputs])
-      except:
-        rows = None
-      try:
-        cols = min([x.shape[2] for x in inputs])  
-      except:
-        cols = None 
-      return tf.keras.backend.concatenate([
-        x[:, 0:rows, 0:cols, :] for x in inputs                                  
-      ], axis=3)                                      
+      min_shape = tf.concat([tf.constant([-1]),min_shape[1:3], tf.constant([-1])], axis=0)
+      return tf.ensure_shape(
+          tf.keras.backend.concatenate([
+            tf.slice(x, (0,0,0,0), min_shape) for x in inputs                                  
+          ], axis=3),
+          shape=(None, None, None, sum([x.shape[3] for x in inputs]))
+      )                                      
       
 
   def build(self, input_shape):
